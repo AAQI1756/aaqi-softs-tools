@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Calculator</title>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .calculator-container {
+            background-color: #fff;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 2rem;
+        }
+        
+        .go-back {
+            display: block;
+            text-align: center;
+            margin-bottom: 1rem;
+            text-decoration: none;
+            color: #0366d6;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #0366d6;
+            box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.2);
+        }
+
+        .variable-rate-group {
+            border: 1px dashed #ccc;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .variable-rate-group .form-group {
+            margin-bottom: 0.75rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background-color: #0366d6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .add-rate-btn {
+            background-color: #6c757d;
+            margin-top: 0;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+        }
+        
+        .add-rate-btn:hover {
+            background-color: #5a6268;
+        }
+
+        #results {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #eee;
+            display: none;
+        }
+
+        #results h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: #0366d6;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .result-label {
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-weight: 400;
+            color: #0366d6;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 500px) {
+            .calculator-container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-container">
+        <h1>Loan Calculator</h1>
+        <form id="loan-form">
+            <div class="form-group">
+                <label for="loanAmount">Loan Amount</label>
+                <input type="number" id="loanAmount" placeholder="e.g., 50000" min="0" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="interestType">Interest Type</label>
+                <select id="interestType" required>
+                    <option value="fixed">Fixed</option>
+                    <option value="variable">Variable</option>
+                </select>
+            </div>
+            
+            <div id="fixedRateSection" class="form-group">
+                <label for="interestRate">Interest Rate (%)</label>
+                <input type="number" id="interestRate" placeholder="e.g., 5.5" min="0" required>
+            </div>
+
+            <div id="variableRateSection" style="display: none;">
+                <div class="variable-rate-group">
+                    <div class="form-group">
+                        <label>Duration (months)</label>
+                        <input type="number" class="rate-term" placeholder="e.g., 12" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Interest Rate (%)</label>
+                        <input type="number" class="rate-value" placeholder="e.g., 4.5" min="0" required>
+                    </div>
+                </div>
+                <button type="button" class="add-rate-btn" id="addRateBtn">Add another rate</button>
+            </div>
+
+            <div class="form-group">
+                <label for="loanDuration">Total Loan Duration (in months)</label>
+                <input type="number" id="loanDuration" placeholder="e.g., 60" min="1" required>
+            </div>
+
+            <button type="button" id="calculateBtn">Calculate</button>
+        </form>
+
+        <div id="results">
+            <h2>Your Loan Summary</h2>
+            <div class="result-item">
+                <span class="result-label">Monthly Payment:</span>
+                <span class="result-value" id="monthlyPayment"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Total Payment (with Interest):</span>
+                <span class="result-value" id="totalPaymentWithInterest"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Total Interest Paid:</span>
+                <span class="result-value" id="totalInterestPaid"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Total Payment (without Interest):</span>
+                <span class="result-value" id="totalPaymentWithoutInterest"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const interestType = document.getElementById('interestType');
+            const fixedRateSection = document.getElementById('fixedRateSection');
+            const variableRateSection = document.getElementById('variableRateSection');
+            const addRateBtn = document.getElementById('addRateBtn');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const resultsDiv = document.getElementById('results');
+
+            // --- UI Logic ---
+            
+            // Toggle between fixed and variable rate fields
+            interestType.addEventListener('change', () => {
+                if (interestType.value === 'fixed') {
+                    fixedRateSection.style.display = 'block';
+                    variableRateSection.style.display = 'none';
+                } else {
+                    fixedRateSection.style.display = 'none';
+                    variableRateSection.style.display = 'block';
+                }
+                // Hide results on type change
+                resultsDiv.style.display = 'none';
+            });
+
+            // Add new variable rate input group
+            addRateBtn.addEventListener('click', () => {
+                const newRateGroup = document.createElement('div');
+                newRateGroup.classList.add('variable-rate-group');
+                newRateGroup.innerHTML = `
+                    <div class="form-group">
+                        <label>Duration (months)</label>
+                        <input type="number" class="rate-term" placeholder="e.g., 12" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Interest Rate (%)</label>
+                        <input type="number" class="rate-value" placeholder="e.g., 4.5" min="0" required>
+                    </div>
+                `;
+                variableRateSection.insertBefore(newRateGroup, addRateBtn);
+            });
+
+            // --- Calculation Logic ---
+
+            calculateBtn.addEventListener('click', calculateLoan);
+
+            function calculateLoan() {
+                const principal = parseFloat(document.getElementById('loanAmount').value);
+                const durationMonths = parseInt(document.getElementById('loanDuration').value);
+                const type = interestType.value;
+
+                // Basic validation for core fields
+                if (isNaN(principal) || principal <= 0 || isNaN(durationMonths) || durationMonths <= 0) {
+                    alert('Please enter a valid loan amount and duration.');
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+
+                let totalPayment = 0;
+                let totalInterest = 0;
+                let remainingBalance = principal;
+
+                if (type === 'fixed') {
+                    const interestRate = parseFloat(document.getElementById('interestRate').value);
+                    if (isNaN(interestRate) || interestRate < 0) {
+                        alert('Please enter a valid fixed interest rate.');
+                        resultsDiv.style.display = 'none';
+                        return;
+                    }
+                    
+                    const monthlyRate = (interestRate / 100) / 12;
+
+                    if (monthlyRate === 0) {
+                        totalPayment = principal;
+                        totalInterest = 0;
+                    } else {
+                        const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, durationMonths)) / (Math.pow(1 + monthlyRate, durationMonths) - 1);
+                        totalPayment = monthlyPayment * durationMonths;
+                        totalInterest = totalPayment - principal;
+                    }
+
+                } else { // Variable rate calculation
+                    const rateGroups = document.querySelectorAll('#variableRateSection .variable-rate-group');
+                    let totalTermEntered = 0;
+
+                    const rates = Array.from(rateGroups).map(group => {
+                        const term = parseInt(group.querySelector('.rate-term').value);
+                        const rate = parseFloat(group.querySelector('.rate-value').value);
+                        
+                        if (isNaN(term) || term <= 0 || isNaN(rate) || rate < 0) {
+                            alert('Please ensure all variable rate terms and rates are valid numbers.');
+                            resultsDiv.style.display = 'none';
+                            throw new Error('Invalid input');
+                        }
+                        totalTermEntered += term;
+                        return { term, rate };
+                    });
+                    
+                    if (totalTermEntered !== durationMonths) {
+                        alert(`The sum of all variable terms must equal the total loan duration (${durationMonths} months). The sum of your terms is ${totalTermEntered}.`);
+                        resultsDiv.style.display = 'none';
+                        return;
+                    }
+
+                    let monthlyPayment = 0; // Will be the monthly payment for the current period
+                    for (const { term, rate } of rates) {
+                        const monthlyRate = (rate / 100) / 12;
+                        
+                        if (monthlyRate === 0) {
+                            // 0% interest period: principal payment is a flat amount
+                            monthlyPayment = remainingBalance / term;
+                            totalPayment += monthlyPayment * term;
+                            remainingBalance -= monthlyPayment * term;
+                        } else {
+                            // Amortization for this period
+                            const numerator = monthlyRate * Math.pow(1 + monthlyRate, term);
+                            const denominator = Math.pow(1 + monthlyRate, term) - 1;
+                            monthlyPayment = remainingBalance * (numerator / denominator);
+                            
+                            // Simulate payments for this period
+                            for(let i = 0; i < term; i++) {
+                                const interestThisMonth = remainingBalance * monthlyRate;
+                                const principalPaidThisMonth = monthlyPayment - interestThisMonth;
+                                remainingBalance -= principalPaidThisMonth;
+                                totalInterest += interestThisMonth;
+                                totalPayment += monthlyPayment;
+                            }
+                        }
+                    }
+                }
+
+                // Display results
+                const monthlyPayment = totalPayment / durationMonths;
+                const totalPaymentWithoutInterest = principal;
+                const totalInterestPaid = totalPayment - principal;
+
+                document.getElementById('monthlyPayment').textContent = `PKR ${monthlyPayment.toFixed(2)}`;
+                document.getElementById('totalPaymentWithInterest').textContent = `PKR ${totalPayment.toFixed(2)}`;
+                document.getElementById('totalInterestPaid').textContent = `PKR ${totalInterestPaid.toFixed(2)}`;
+                document.getElementById('totalPaymentWithoutInterest').textContent = `PKR ${totalPaymentWithoutInterest.toFixed(2)}`;
+
+                resultsDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
