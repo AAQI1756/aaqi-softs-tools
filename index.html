@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toolbox UI</title>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            padding: 1rem 2rem 0 0;
+            box-sizing: border-box;
+        }
+        
+        .main-content {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            box-sizing: border-box;
+            flex-grow: 1;
+        }
+        
+        .greetings {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #555;
+            margin-top: 40px;
+            margin-bottom: 2.5rem;
+            animation: slideInFromTop 0.8s ease-out 0.2s forwards;
+            opacity: 0;
+        }
+
+        .search-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 2rem auto;
+            display: flex;
+            justify-content: center;
+            animation: zoomIn 0.5s ease-out;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: box-shadow 0.3s;
+        }
+        
+        #searchInput:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.3);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            padding: 0;
+        }
+
+        .tool-card {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            animation: cardPopIn 0.5s ease-out;
+        }
+        
+        .tool-card-link {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .tool-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            transition: transform 0.2s;
+        }
+
+        .tool-card:hover .tool-icon {
+            transform: scale(1.1);
+        }
+
+        .tool-title {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .tool-description {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .menu-container {
+            position: relative;
+        }
+
+        .menu-icon {
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #555;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            min-width: 150px;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 0.75rem 1rem;
+            text-decoration: none;
+            color: #333;
+            transition: background-color 0.2s;
+        }
+
+        .dropdown-menu a:hover {
+            background-color: #f0f0f0;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes popIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .modal-title {
+            margin-top: 0;
+        }
+
+        .footer {
+            width: 100%;
+            padding: 1.5rem;
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: auto;
+            box-sizing: border-box;
+        }
+        
+        .whatsapp-float {
+            position: fixed;
+            bottom: 4vw;
+            right: 4vw;
+            background-color: #25D366;
+            color: #fff;
+            border-radius: 50%;
+            width: 14vw;
+            height: 14vw;
+            max-width: 60px;
+            max-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            text-decoration: none;
+            z-index: 100;
+            transition: transform 0.2s;
+            animation: pulse 2s infinite ease-in-out;
+        }
+        
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+        }
+        
+        .whatsapp-icon {
+             width: 60%;
+             height: 60%;
+        }
+
+        /* Keyframes for animations */
+        @keyframes slideInFromTop {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes cardPopIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 20px rgba(37, 211, 102, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+            }
+            .greetings {
+                font-size: 1.25rem;
+                margin-bottom: 1.5rem;
+                margin-top: 20px;
+            }
+            .search-container {
+                max-width: 100%;
+                margin: 0 auto 1.5rem auto;
+            }
+            .whatsapp-float {
+                bottom: 5vw;
+                right: 5vw;
+                width: 16vw;
+                height: 16vw;
+                max-width: 50px;
+                max-height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="menu-container">
+            <span class="menu-icon" id="menuIcon">☰</span>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <a href="#" class="menu-item" data-content="about">About Us</a>
+                <a href="#" class="menu-item" data-content="contact">Contact Us</a>
+                <a href="#" class="menu-item" data-content="privacy">Privacy Policy</a>
+                <a href="#" class="menu-item" data-content="disclaimer">Disclaimer</a>
+                <a href="#" class="menu-item" data-content="terms">Terms of Service</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        
+        <h1 class="greetings">Welcome! 👋</h1>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search tools...">
+        </div>
+        
+        <div class="container">
+            <a href="image-compressor.html" class="tool-card-link">
+                <div class="tool-card">
+                    <div class="tool-icon">📸</div>
+                    <h3 class="tool-title">Image Compressor</h3>
+                    <p class="tool-description">Reduce the size of your images.</p>
+                </div>
+            </a>
+            <a href="loan-calculator.html" class="tool-card-link">
+                <div class="tool-card">
+                    <div class="tool-icon">💰</div>
+                    <h3 class="tool-title">Loan Calculator</h3>
+                    <p class="tool-description">Calculate loan payments and interest.</p>
+                </div>
+            </a>
+            <a href="unit-converter.html" class="tool-card-link">
+                <div class="tool-card">
+                    <div class="tool-icon">📏</div>
+                    <h3 class="tool-title">Unit Converter</h3>
+                    <p class="tool-description">Convert between different units of measurement.</p>
+                </div>
+            </a>
+            <a href="stock-calculator.html" class="tool-card-link">
+                <div class="tool-card">
+                    <div class="tool-icon">📈</div>
+                    <h3 class="tool-title">Stock Calculator</h3>
+                    <p class="tool-description">Analyze your stock market investments.</p>
+                </div>
+            </a>
+
+            <a href="zakat-calculator.html" class="tool-card-link">
+                <div class="tool-card">
+                    <div class="tool-icon">🕌</div>
+                    <h3 class="tool-title">Zakat Calculator</h3>
+                    <p class="tool-description">Calculate your Zakat obligations.</p>
+                </div>
+            </a>
+            <a href="stock-profit-loss.html" class="tool-card-link">
+                <div class="tool-card">
+                    <div class="tool-icon">💹</div>
+                    <h3 class="tool-title">Stock Profit/Loss</h3>
+                    <p class="tool-description">Track gains and losses on your stock trades.</p>
+                </div>
+            </a>
+            <a href="tax-calculator.html" class="tool-card-link">
+                <div class="tool-card">
+                    <div class="tool-icon">💵</div>
+                    <h3 class="tool-title">Tax Calculator</h3>
+                    <p class="tool-description">Estimate your tax liability.</p>
+                </div>
+            </a>
+            <a href="result-calculator.html" class="tool-card-link">
+                <div class="tool-card">
+                    <div class="tool-icon">🎓</div>
+                    <h3 class="tool-title">Result Calculator</h3>
+                    <p class="tool-description">Calculate your academic results and grades.</p>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        © 2025 All rights reserved AAQI Soft Solutions
+    </footer>
+    
+    <a href="https://wa.me/923488608474" class="whatsapp-float" target="_blank">
+        <div class="whatsapp-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#ffffff" d="M12.04 2.87c-5.06 0-9.17 4.1-9.17 9.17 0 1.63.43 3.16 1.25 4.54l-1.31 4.79 4.9-1.29c1.35.79 2.9 1.2 4.54 1.2 5.06 0 9.17-4.1 9.17-9.17.01-5.06-4.1-9.17-9.16-9.17zm.01 16.7c-1.55 0-2.99-.44-4.24-1.22l-3.23.85.87-3.17c-.85-1.39-1.3-3.01-1.3-4.75 0-4.19 3.4-7.59 7.6-7.59 4.19 0 7.59 3.4 7.59 7.59-.01 4.19-3.4 7.59-7.59 7.59zm3.8-5.06c-.2-.1-.85-.42-1.2-.56-.35-.14-.6-.2-.85.2s-.97 1.21-1.18 1.45c-.21.23-.42.26-.78.11-.42-.17-1.8-1.58-3.41-3.33-.29-.32-.32-.26-.14-.29.17-.03.36-.03.56-.03.2 0 .44-.06.6-.26.17-.2.6-.57.8-.86.2-.29.27-.24.37-.42.1-.18.17-.42.26-.59.1-.17.06-.32-.06-.47-.12-.15-.84-2-.99-2.8-.15-.8-.3-.68-.2-.61.1-.09.34-.14.51-.17.17-.03.35-.04.51-.04.18 0 .42.06.63.2.2.14.8.78.89.85.09.07 1.52 2.3 1.55 2.37.03.07.03.14.01.29-.01.15-.2.27-.37.42-.17.15-.35.26-.5.4-.15.13-.3.2-.44.27z"/>
+            </svg>
+        </div>
+    </a>
+    
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <span class="close-button" id="closeButton">&times;</span>
+            <h2 class="modal-title" id="modalTitle"></h2>
+            <p id="modalText"></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('searchInput');
+            const toolCards = document.querySelectorAll('.tool-card');
+            
+            // Menu & Modal Logic
+            const menuIcon = document.getElementById('menuIcon');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const modalOverlay = document.getElementById('modalOverlay');
+            const closeButton = document.getElementById('closeButton');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalText = document.getElementById('modalText');
+            const menuItems = document.querySelectorAll('.menu-item');
+
+            const content = {
+                about: {
+                    title: "About Us",
+                    text: "We are a team of developers creating simple and useful online tools to make your daily tasks easier. Our goal is to provide a comprehensive suite of calculators and converters for everyone."
+                },
+                contact: {
+                    title: "Contact Us",
+                    text: "Have a question or a suggestion? Feel free to reach out to us at contact@example.com."
+                },
+                privacy: {
+                    title: "Privacy Policy",
+                    text: "Your privacy is important to us. This policy outlines how we collect, use, and protect your data. We do not store any personal information from your use of these tools."
+                },
+                disclaimer: {
+                    title: "Disclaimer",
+                    text: "All tools on this website are provided for informational and educational purposes only. We do not guarantee the accuracy of the results and are not liable for any damages or losses related to their use."
+                },
+                terms: {
+                    title: "Terms of Service",
+                    text: "By using this website, you agree to our terms. This includes proper use of our tools and adherence to our policies. Please read the full terms before proceeding."
+                }
+            };
+
+            menuIcon.addEventListener('click', (e) => {
+                dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+                e.stopPropagation();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!menuIcon.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                    dropdownMenu.style.display = 'none';
+                }
+            });
+
+            menuItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    dropdownMenu.style.display = 'none';
+                    
+                    const dataType = item.getAttribute('data-content');
+                    modalTitle.textContent = content[dataType].title;
+                    modalText.textContent = content[dataType].text;
+                    modalOverlay.style.display = 'flex';
+                });
+            });
+
+            closeButton.addEventListener('click', () => {
+                modalOverlay.style.display = 'none';
+            });
+            
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target.id === 'modalOverlay') {
+                    modalOverlay.style.display = 'none';
+                }
+            });
+
+            // Search Logic
+            searchInput.addEventListener('input', (event) => {
+                const query = event.target.value.toLowerCase();
+                const container = document.querySelector('.container');
+                const links = container.querySelectorAll('a');
+
+                links.forEach(link => {
+                    const title = link.querySelector('.tool-title').textContent.toLowerCase();
+                    const description = link.querySelector('.tool-description').textContent.toLowerCase();
+
+                    if (title.includes(query) || description.includes(query)) {
+                        link.style.display = 'block';
+                    } else {
+                        link.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
