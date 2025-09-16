@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Unit Converter</title>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        .converter-container {
+            background-color: #fff;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            animation: fadeIn 0.5s ease-in-out;
+            margin: 1rem 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #0366d6;
+            box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background-color: #0366d6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        #results {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #eee;
+            display: none;
+        }
+
+        #results h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: #0366d6;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .result-label {
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-weight: 400;
+            color: #0366d6;
+        }
+        
+        .explanation {
+            background-color: #e8f5e9;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #2e7d32;
+        }
+        
+        .conversion-factor-line {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin: 1rem 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .select-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .select-group .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 500px) {
+            .converter-container {
+                padding: 1.5rem;
+            }
+            .select-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="converter-container">
+        <h1>Universal Unit Converter</h1>
+        <form id="unit-converter-form">
+            <div class="form-group">
+                <label for="inputValue">Enter Value</label>
+                <input type="number" id="inputValue" placeholder="e.g., 100" min="0" required>
+            </div>
+            
+            <div class="select-group">
+                <div class="form-group">
+                    <label for="fromUnit">From Unit</label>
+                    <select id="fromUnit" required>
+                        <option value="">--Select Unit--</option>
+                        <optgroup label="Mass">
+                            <option value="kg">Kilograms (kg)</option>
+                            <option value="g">Grams (g)</option>
+                            <option value="mg">Milligrams (mg)</option>
+                            <option value="lb">Pounds (lb)</option>
+                            <option value="oz">Ounces (oz)</option>
+                        </optgroup>
+                        <optgroup label="Length">
+                            <option value="m">Meters (m)</option>
+                            <option value="km">Kilometers (km)</option>
+                            <option value="cm">Centimeters (cm)</option>
+                            <option value="mm">Millimeters (mm)</option>
+                            <option value="ft">Feet (ft)</option>
+                            <option value="in">Inches (in)</option>
+                        </optgroup>
+                        <optgroup label="Volume">
+                            <option value="L">Liters (L)</option>
+                            <option value="ml">Milliliters (ml)</option>
+                            <option value="gal">Gallons (gal)</option>
+                            <option value="fl-oz">Fluid Ounces (fl oz)</option>
+                            <option value="cup">Cups (cup)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="toUnit">To Unit</label>
+                    <select id="toUnit" required>
+                        <option value="">--Select Unit--</option>
+                        <optgroup label="Mass">
+                            <option value="kg">Kilograms (kg)</option>
+                            <option value="g">Grams (g)</option>
+                            <option value="mg">Milligrams (mg)</option>
+                            <option value="lb">Pounds (lb)</option>
+                            <option value="oz">Ounces (oz)</option>
+                        </optgroup>
+                        <optgroup label="Length">
+                            <option value="m">Meters (m)</option>
+                            <option value="km">Kilometers (km)</option>
+                            <option value="cm">Centimeters (cm)</option>
+                            <option value="mm">Millimeters (mm)</option>
+                            <option value="ft">Feet (ft)</option>
+                            <option value="in">Inches (in)</option>
+                        </optgroup>
+                        <optgroup label="Volume">
+                            <option value="L">Liters (L)</option>
+                            <option value="ml">Milliliters (ml)</option>
+                            <option value="gal">Gallons (gal)</option>
+                            <option value="fl-oz">Fluid Ounces (fl oz)</option>
+                            <option value="cup">Cups (cup)</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="button" id="convertBtn">Convert</button>
+        </form>
+
+        <div id="results">
+            <h2>Conversion Summary</h2>
+            <p class="conversion-factor-line" id="conversionFactorLine"></p>
+            <div class="result-item">
+                <span class="result-label">Initial Value:</span>
+                <span class="result-value" id="initialValue"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Converted Value:</span>
+                <span class="result-value" id="convertedValue"></span>
+            </div>
+            <div class="explanation">
+                <p id="howItHappened"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputValue = document.getElementById('inputValue');
+            const fromUnit = document.getElementById('fromUnit');
+            const toUnit = document.getElementById('toUnit');
+            const convertBtn = document.getElementById('convertBtn');
+            const resultsDiv = document.getElementById('results');
+            const initialValueSpan = document.getElementById('initialValue');
+            const convertedValueSpan = document.getElementById('convertedValue');
+            const howItHappenedP = document.getElementById('howItHappened');
+            const conversionFactorLine = document.getElementById('conversionFactorLine');
+
+            // Conversion factors object
+            const conversionFactors = {
+                'g': 1, 'kg': 1000, 'mg': 0.001, 'lb': 453.592, 'oz': 28.3495,
+                'm': 1, 'km': 1000, 'cm': 0.01, 'mm': 0.001, 'ft': 0.3048, 'in': 0.0254,
+                'L': 1, 'ml': 0.001, 'gal': 3.78541, 'fl-oz': 0.0295735, 'cup': 0.236588
+            };
+
+            const unitLabels = {
+                'kg': 'Kilograms (kg)', 'g': 'Grams (g)', 'mg': 'Milligrams (mg)', 'lb': 'Pounds (lb)', 'oz': 'Ounces (oz)',
+                'm': 'Meters (m)', 'km': 'Kilometers (km)', 'cm': 'Centimeters (cm)', 'mm': 'Millimeters (mm)', 'ft': 'Feet (ft)', 'in': 'Inches (in)',
+                'L': 'Liters (L)', 'ml': 'Milliliters (ml)', 'gal': 'Gallons (gal)', 'fl-oz': 'Fluid Ounces (fl oz)', 'cup': 'Cups (cup)'
+            };
+
+            convertBtn.addEventListener('click', () => {
+                const value = parseFloat(inputValue.value);
+                const fromUnitValue = fromUnit.value;
+                const toUnitValue = toUnit.value;
+
+                if (isNaN(value) || value < 0 || !fromUnitValue || !toUnitValue) {
+                    alert('Please enter a valid number and select both "From" and "To" units.');
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+                
+                const fromCategory = fromUnit.options[fromUnit.selectedIndex].closest('optgroup').label;
+                const toCategory = toUnit.options[toUnit.selectedIndex].closest('optgroup').label;
+                
+                if (fromCategory !== toCategory) {
+                    alert('Please select units from the same category (e.g., Mass to Mass).');
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+                
+                const baseValue = value * conversionFactors[fromUnitValue];
+                const convertedValue = baseValue / conversionFactors[toUnitValue];
+                
+                const factorFromBase = conversionFactors[fromUnitValue];
+                const factorToBase = conversionFactors[toUnitValue];
+                const oneUnitToUnit = (1 * factorFromBase) / factorToBase;
+
+                const fromUnitLabel = unitLabels[fromUnitValue];
+                const toUnitLabel = unitLabels[toUnitValue];
+
+                initialValueSpan.textContent = `${value} ${fromUnit.value}`;
+                convertedValueSpan.textContent = `${convertedValue.toFixed(4)} ${toUnit.value}`;
+                
+                howItHappenedP.innerHTML = `To convert from **${fromUnitLabel}** to **${toUnitLabel}**, the initial value was multiplied by the conversion factor to get the final result.`;
+                
+                conversionFactorLine.textContent = `1 ${fromUnit.value} = ${oneUnitToUnit.toFixed(4)} ${toUnit.value}`;
+
+                resultsDiv.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
