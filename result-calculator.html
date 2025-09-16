@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result Calculator</title>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .calculator-container {
+            background-color: #fff;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #0366d6;
+            box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background-color: #0366d6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        #results {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #eee;
+            display: none;
+        }
+
+        #results h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: #0366d6;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .result-label {
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-weight: 400;
+            color: #0366d6;
+        }
+
+        #status {
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        
+        .pass {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .fail {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 500px) {
+            .calculator-container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-container">
+        <h1>Result Calculator</h1>
+        <form id="result-form">
+            <div class="form-group">
+                <label for="obtainedMarks">Obtained Marks</label>
+                <input type="number" id="obtainedMarks" placeholder="e.g., 650" min="0" required>
+            </div>
+            <div class="form-group">
+                <label for="totalMarks">Total Marks</label>
+                <input type="number" id="totalMarks" placeholder="e.g., 1000" min="1" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="passingType">Passing Criteria</label>
+                <select id="passingType">
+                    <option value="percent">Percentage (%)</option>
+                    <option value="marks">Marks</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label id="passingLabel" for="passingValue">Passing Percentage (%)</label>
+                <input type="number" id="passingValue" placeholder="e.g., 50" min="0" required>
+            </div>
+            
+            <button type="button" id="calculateBtn">Calculate</button>
+        </form>
+
+        <div id="results">
+            <h2>Result Summary</h2>
+            <div class="result-item">
+                <span class="result-label">Obtained Marks:</span>
+                <span class="result-value" id="obtainedMarksResult"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Total Marks:</span>
+                <span class="result-value" id="totalMarksResult"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label" id="passingCriteriaResult">Passing Percentage:</span>
+                <span class="result-value" id="passingValueResult"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Obtained Percentage:</span>
+                <span class="result-value" id="obtainedPercentResult"></span>
+            </div>
+            <div id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const passingType = document.getElementById('passingType');
+            const passingLabel = document.getElementById('passingLabel');
+            const passingValueInput = document.getElementById('passingValue');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const resultsDiv = document.getElementById('results');
+
+            // --- UI Logic for dropdown ---
+            passingType.addEventListener('change', () => {
+                const type = passingType.value;
+                if (type === 'percent') {
+                    passingLabel.textContent = 'Passing Percentage (%)';
+                    passingValueInput.placeholder = 'e.g., 50';
+                    passingValueInput.max = 100;
+                } else {
+                    passingLabel.textContent = 'Passing Marks';
+                    passingValueInput.placeholder = 'e.g., 330';
+                    passingValueInput.removeAttribute('max');
+                }
+                // Hide results when criteria type is changed
+                resultsDiv.style.display = 'none';
+            });
+
+            // --- Calculation Logic ---
+            calculateBtn.addEventListener('click', () => {
+                const obtainedMarks = parseFloat(document.getElementById('obtainedMarks').value);
+                const totalMarks = parseFloat(document.getElementById('totalMarks').value);
+                const passingValue = parseFloat(passingValueInput.value);
+                const passingTypeResult = passingType.value;
+
+                // Input validation
+                if (isNaN(obtainedMarks) || isNaN(totalMarks) || isNaN(passingValue) || obtainedMarks < 0 || totalMarks <= 0 || passingValue < 0) {
+                    alert('Please enter valid, non-negative numbers.');
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+                if (obtainedMarks > totalMarks) {
+                    alert('Obtained marks cannot be greater than total marks.');
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+                if (passingTypeResult === 'marks' && passingValue > totalMarks) {
+                    alert('Passing marks cannot be greater than total marks.');
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+                if (passingTypeResult === 'percent' && passingValue > 100) {
+                    alert('Passing percentage cannot be greater than 100.');
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+
+                // Calculate obtained percentage
+                const obtainedPercent = (obtainedMarks / totalMarks) * 100;
+
+                // Determine pass/fail status
+                let isPassed;
+                if (passingTypeResult === 'percent') {
+                    isPassed = obtainedPercent >= passingValue;
+                } else {
+                    isPassed = obtainedMarks >= passingValue;
+                }
+                
+                // Display results
+                document.getElementById('obtainedMarksResult').textContent = obtainedMarks;
+                document.getElementById('totalMarksResult').textContent = totalMarks;
+                document.getElementById('obtainedPercentResult').textContent = `${obtainedPercent.toFixed(2)}%`;
+
+                const passingCriteriaResult = document.getElementById('passingCriteriaResult');
+                const passingValueResult = document.getElementById('passingValueResult');
+
+                if (passingTypeResult === 'percent') {
+                    passingCriteriaResult.textContent = 'Passing Percentage:';
+                    passingValueResult.textContent = `${passingValue}%`;
+                } else {
+                    passingCriteriaResult.textContent = 'Passing Marks:';
+                    passingValueResult.textContent = `${passingValue}`;
+                }
+
+                const statusDiv = document.getElementById('status');
+                if (isPassed) {
+                    statusDiv.textContent = 'Status: PASSED';
+                    statusDiv.classList.remove('fail');
+                    statusDiv.classList.add('pass');
+                } else {
+                    statusDiv.textContent = 'Status: FAILED';
+                    statusDiv.classList.remove('pass');
+                    statusDiv.classList.add('fail');
+                }
+
+                resultsDiv.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
