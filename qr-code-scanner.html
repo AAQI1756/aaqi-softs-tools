@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR & Barcode Scanner</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      height: 100vh;
+      background: #111;
+      color: #fff;
+      overflow: hidden;
+    }
+    #scanner {
+      position: relative;
+      width: 90%;
+      max-width: 500px;
+      aspect-ratio: 1/1;
+      overflow: hidden;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .scanline {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: lime;
+      animation: scan 3s linear infinite;
+    }
+    @keyframes scan {
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
+    button, label {
+      background: #222;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover, label:hover {
+      background: #444;
+    }
+    input[type=file] {
+      display: none;
+    }
+    .popup {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(5px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    .popup-content {
+      background: #fff;
+      color: #000;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 90%;
+    }
+    .popup button {
+      margin-top: 10px;
+      background: #111;
+      color: #fff;
+    }
+    .popup a {
+      color: #06b6d4;
+      word-break: break-all;
+      display: block;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="scanner">
+    <video id="video" autoplay playsinline></video>
+    <div class="scanline"></div>
+  </div>
+
+  <div class="controls">
+    <button id="torchToggle">Toggle Light</button>
+    <label for="fileUpload">Upload</label>
+    <input type="file" id="fileUpload" accept="image/*" />
+  </div>
+
+  <div class="popup" id="resultPopup">
+    <div class="popup-content">
+      <p id="resultText"></p>
+      <a id="resultLink" href="#" target="_blank" style="display:none;">Open Link</a>
+      <button onclick="closePopup()">Close</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script>
+    const video = document.getElementById('video');
+    const fileUpload = document.getElementById('fileUpload');
+    const torchToggle = document.getElementById('torchToggle');
+    const popup = document.getElementById('resultPopup');
+    const resultText = document.getElementById('resultText');
+    const resultLink = document.getElementById('resultLink');
+    let track;
+
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream;
+        track = stream.getVideoTracks()[0];
+        scanLoop();
+      } catch (err) {
+        alert('Camera access denied: ' + err);
+      }
+    }
+
+    function scanLoop() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, canvas.width, canvas.height);
+      if (code) {
+        showResult(code.data);
+      } else {
+        requestAnimationFrame(scanLoop);
+      }
+    }
+
+    function showResult(text) {
+      resultText.textContent = text;
+      if (isValidURL(text)) {
+        resultLink.href = text;
+        resultLink.style.display = 'block';
+      } else {
+        resultLink.style.display = 'none';
+      }
+      popup.style.display = 'flex';
+    }
+
+    function isValidURL(string) {
+      try {
+        new URL(string);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function closePopup() {
+      popup.style.display = 'none';
+      requestAnimationFrame(scanLoop);
+    }
+
+    torchToggle.addEventListener('click', () => {
+      if (track && track.getCapabilities().torch) {
+        const torchOn = track.getSettings().torch;
+        track.applyConstraints({ advanced: [{ torch: !torchOn }] });
+      } else {
+        alert('Torch not supported on this device.');
+      }
+    });
+
+    fileUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, canvas.width, canvas.height);
+        if (code) {
+          showResult(code.data);
+        } else {
+          alert('No QR/Barcode detected.');
+        }
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
+    startCamera();
+  </script>
+</body>
+</html>
