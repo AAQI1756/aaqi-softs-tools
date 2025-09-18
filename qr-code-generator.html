@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+  body {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    background: #ffffff;
+    animation: fadeIn 1s ease-in-out;
+  }
+
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(-20px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.container {
+background: #fefefe;
+padding: 30px;
+border-radius: 25px;
+box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 20px;
+width: 100%;
+max-width: 500px;
+transition: transform 0.3s;
+animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+from { transform: translateY(50px); opacity: 0; }
+to { transform: translateY(0); opacity: 1; }
+}
+
+h2 { text-align: center; color: #333; margin: 0; }
+input, select, button {
+width: 100%;
+padding: 12px 15px;
+border-radius: 12px;
+border: 1px solid #ccc;
+font-size: 16px;
+transition: all 0.3s;
+}
+input\:focus, select\:focus { outline: 2px solid #06b6d4; }
+button {
+background: #06b6d4;
+color: #fff;
+cursor: pointer;
+font-weight: bold;
+border: none;
+transition: all 0.3s;
+}
+button\:hover { background: #0ea5e9; transform: scale(1.05); }
+canvas { margin-top: 20px; border-radius: 15px; width: 100%; height: auto; box-shadow: 0 8px 25px rgba(0,0,0,0.1); transition: all 0.3s; }
+@media (max-width: 550px) {
+.container { padding: 20px; gap: 15px; }
+input, select, button { font-size: 14px; padding: 10px 12px; }
+} </style>
+
+</head>
+<body>
+<div class="container">
+  <h2>QR Code Generator</h2>
+  <select id="categorySelect">
+    <option value="">Select Category</option>
+    <option value="URL">URL</option>
+    <option value="Text">Text</option>
+    <option value="Email">Email</option>
+    <option value="Phone">Phone</option>
+    <option value="WiFi">WiFi</option>
+    <option value="SMS">SMS</option>
+    <option value="Location">Location</option>
+    <option value="Contact">Contact</option>
+    <option value="Event">Event</option>
+    <option value="Payment">Payment Info</option>
+  </select>
+
+  <div id="detailsInput"></div>
+
+<button id="generateBtn" style="display:none;">Generate QR Code</button> <canvas id="qrCanvas"></canvas> <button id="downloadBtn">Download QR Code</button>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+<script>
+const categorySelect = document.getElementById('categorySelect');
+const detailsInput = document.getElementById('detailsInput');
+const generateBtn = document.getElementById('generateBtn');
+const canvas = document.getElementById('qrCanvas');
+const downloadBtn = document.getElementById('downloadBtn');
+
+categorySelect.addEventListener('change', () => {
+  const cat = categorySelect.value;
+  detailsInput.innerHTML = '';
+  generateBtn.style.display = 'none';
+  if(!cat) return;
+
+  let html = '';
+  switch(cat) {
+    case 'URL': case 'Text': html = `<input type='text' id='textInput' placeholder='Enter your ${cat}' />`; break;
+    case 'Email': html = `<input type='email' id='textInput' placeholder='Enter Email Address' />`; break;
+    case 'Phone': html = `<input type='tel' id='textInput' placeholder='Enter Phone Number' />`; break;
+    case 'WiFi': html = `<input type='text' id='textInput' placeholder='Format: WPA;SSID;PASSWORD' />`; break;
+    case 'SMS': html = `<input type='text' id='textInput' placeholder='Format: Number;Message' />`; break;
+    case 'Location': html = `<input type='text' id='textInput' placeholder='Format: Latitude,Longitude' />`; break;
+    case 'Contact': html = `<input type='text' id='textInput' placeholder='Enter Name for vCard' />`; break;
+    case 'Event': html = `<input type='text' id='textInput' placeholder='Enter Event Summary' />`; break;
+    case 'Payment': html = `
+      <input type='text' id='bankName' placeholder='Bank Name' />
+      <input type='text' id='accountNumber' placeholder='Account Number' />
+      <input type='text' id='iban' placeholder='IBAN' />
+      <input type='text' id='accountHolder' placeholder='Account Holder Name' />
+    `; break;
+  }
+  detailsInput.innerHTML = html;
+  generateBtn.style.display = 'block';
+});
+
+function formatText(text, category) {
+  if(category === 'Payment') {
+    const bank = document.getElementById('bankName').value;
+    const acc = document.getElementById('accountNumber').value;
+    const iban = document.getElementById('iban').value;
+    const holder = document.getElementById('accountHolder').value;
+    if(!bank || !acc || !iban || !holder) { alert('Please fill all payment details'); return ''; }
+    return `Payment Info:\nBank: ${bank}\nAccount: ${acc}\nIBAN: ${iban}\nHolder: ${holder}`;
+  }
+  const input = document.getElementById('textInput');
+  const textValue = input.value.trim();
+  if(!textValue) { alert('Please enter details'); return ''; }
+
+  switch(category) {
+    case 'Email': return 'mailto:' + textValue;
+    case 'Phone': return 'tel:' + textValue;
+    case 'WiFi': const parts = textValue.split(';'); return `WIFI:T:${parts[0]};S:${parts[1]};P:${parts[2]};;`;
+    case 'SMS': const smsParts = textValue.split(';'); return `SMSTO:${smsParts[0]}:${smsParts[1]}`;
+    case 'Location': const locParts = textValue.split(','); return `geo:${locParts[0]},${locParts[1]}`;
+    case 'Contact': return `BEGIN:VCARD\nFN:${textValue}\nEND:VCARD`;
+    case 'Event': return `BEGIN:VEVENT\nSUMMARY:${textValue}\nEND:VEVENT`;
+    default: return textValue;
+  }
+}
+
+generateBtn.addEventListener('click', () => {
+  const cat = categorySelect.value;
+  const qrText = formatText('', cat);
+  if(!qrText) return;
+  QRCode.toCanvas(canvas, qrText, { width: 300, margin: 2, color: { dark: '#0ea5e9', light: '#ffffff' } }, function (error) {
+    if (error) console.error(error);
+  });
+});
+
+downloadBtn.addEventListener('click', () => {
+  if (!canvas.toDataURL()) return alert('Please generate a QR code first');
+  const link = document.createElement('a');
+  link.download = 'qr_code.png';
+  link.href = canvas.toDataURL();
+  link.click();
+});
+</script>
+
+</body>
+</html>
