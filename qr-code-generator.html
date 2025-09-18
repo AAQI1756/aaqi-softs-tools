@@ -5,66 +5,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR Code Generator</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
-  body {
-    margin: 0;
-    font-family: 'Montserrat', sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 20px;
-    background: #ffffff;
-    animation: fadeIn 1s ease-in-out;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .container {
-    background: #fefefe;
-    padding: 30px;
-    border-radius: 25px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    width: 100%;
-    max-width: 550px;
-    transition: transform 0.3s;
-    animation: slideUp 0.5s ease;
-  }
-  @keyframes slideUp {
-    from { transform: translateY(50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  h2 { text-align: center; color: #333; margin: 0; }
-  input, select, textarea, button {
-    width: 100%;
-    padding: 12px 15px;
-    border-radius: 12px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    transition: all 0.3s;
-    margin-bottom: 15px; /* add spacing between inputs */
-  }
-  textarea { resize: vertical; }
-  input:focus, select:focus, textarea:focus { outline: 2px solid #06b6d4; }
-  button {
-    background: #06b6d4;
-    color: #fff;
-    cursor: pointer;
-    font-weight: bold;
-    border: none;
-    transition: all 0.3s;
-  }
-  button:hover { background: #0ea5e9; transform: scale(1.05); }
-  canvas { margin-top: 20px; border-radius: 15px; width: 100%; height: auto; box-shadow: 0 8px 25px rgba(0,0,0,0.1); transition: all 0.3s; }
-  @media (max-width: 600px) {
-    .container { padding: 20px; gap: 15px; }
-    input, select, button, textarea { font-size: 14px; padding: 10px 12px; }
-  }
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+body {
+  margin:0; font-family:'Montserrat',sans-serif;
+  display:flex; justify-content:center; align-items:flex-start;
+  min-height:100vh; padding:20px; background:#ffffff;
+}
+.container {
+  background:#fefefe; padding:25px; border-radius:25px;
+  box-shadow:0 15px 35px rgba(0,0,0,0.1);
+  display:flex; flex-direction:column; align-items:center; gap:20px;
+  width:100%; max-width:600px;
+}
+h2{text-align:center;color:#333;margin:0;}
+input, select, textarea, button {
+  width:100%; padding:12px 15px; border-radius:12px; border:1px solid #ccc;
+  font-size:16px; transition: all 0.3s; margin-bottom:15px;
+}
+textarea{resize:vertical;}
+input:focus, select:focus, textarea:focus{outline:2px solid #06b6d4;}
+button{
+  background:#06b6d4;color:#fff;cursor:pointer;font-weight:bold;border:none;
+  transition:all 0.3s;
+}
+button:hover{background:#0ea5e9; transform: scale(1.05);}
+canvas{margin-top:20px;border-radius:15px;width:100%;height:auto;box-shadow:0 8px 25px rgba(0,0,0,0.1);}
+#popup{
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  backdrop-filter:blur(5px); background: rgba(0,0,0,0.3);
+  justify-content:center; align-items:center; z-index:1000;
+}
+#popupContent{
+  background:#fff; padding:25px; border-radius:20px; text-align:center; width:300px;
+}
+#progressBar{width:100%; height:20px; border-radius:10px; background:#eee; overflow:hidden; margin-top:15px;}
+#progressBarInner{width:0%; height:100%; background:#06b6d4; transition: width 0.1s;}
+@media(max-width:600px){.container{padding:20px;gap:15px;} input,select,button,textarea{font-size:14px;padding:10px 12px;}}
 </style>
 </head>
 <body>
@@ -72,25 +48,29 @@
   <h2>QR Code Generator</h2>
   <select id="categorySelect">
     <option value="">Select Category</option>
-    <option value="URL">URL</option>
     <option value="Text">Text</option>
-    <option value="Email">Email</option>
-    <option value="Phone">Phone</option>
-    <option value="WiFi">WiFi</option>
-    <option value="SMS">SMS</option>
-    <option value="Location">Location</option>
-    <option value="Contact">Contact</option>
-    <option value="Event">Event</option>
     <option value="Payment">Payment Info</option>
     <option value="Crypto">Crypto Deposit</option>
     <option value="Social">Social Media</option>
+    <option value="Event">Event</option>
+    <option value="Email">Email</option>
+    <option value="Phone">Phone</option>
+    <option value="WiFi">WiFi</option>
+    <option value="URL">URL</option>
   </select>
-
   <div id="detailsInput"></div>
-
   <button id="generateBtn" style="display:none;">Generate QR Code</button>
   <canvas id="qrCanvas"></canvas>
   <button id="downloadBtn">Download QR Code</button>
+</div>
+
+<!-- Popup -->
+<div id="popup">
+  <div id="popupContent">
+    <h3>Processing QR Code...</h3>
+    <div id="progressBar"><div id="progressBarInner"></div></div>
+    <p id="progressText">0%</p>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
@@ -100,121 +80,118 @@ const detailsInput = document.getElementById('detailsInput');
 const generateBtn = document.getElementById('generateBtn');
 const canvas = document.getElementById('qrCanvas');
 const downloadBtn = document.getElementById('downloadBtn');
+const popup = document.getElementById('popup');
+const progressBarInner = document.getElementById('progressBarInner');
+const progressText = document.getElementById('progressText');
 
 categorySelect.addEventListener('change', () => {
   const cat = categorySelect.value;
   detailsInput.innerHTML = '';
   generateBtn.style.display = 'none';
   if(!cat) return;
-
-  let html = '';
-  switch(cat) {
-    case 'URL': html = `<input type='text' id='textInput' placeholder='Enter URL or link here...' />`; break;
-    case 'Text': html = `<textarea id='textInput' rows='4' placeholder='Enter text here. You can use Enter for new lines...'></textarea>`; break;
-    case 'Email': html = `<input type='email' id='textInput' placeholder='Enter Email Address...' />`; break;
-    case 'Phone': html = `<input type='tel' id='textInput' placeholder='Enter Phone Number...' />`; break;
-    case 'WiFi': html = `<input type='text' id='textInput' placeholder='Format: WPA;SSID;PASSWORD' />`; break;
-    case 'SMS': html = `<input type='text' id='textInput' placeholder='Format: Number;Message' />`; break;
-    case 'Location': html = `<input type='text' id='textInput' placeholder='Format: Latitude,Longitude' />`; break;
-    case 'Contact': html = `<input type='text' id='textInput' placeholder='Enter Name for vCard...' />`; break;
-    case 'Event': html = `
-      <input type='text' id='eventName' placeholder='Event Name...' />
-      <input type='text' id='eventDate' placeholder='Date (YYYY-MM-DD)...' />
-      <input type='text' id='eventTime' placeholder='Time (HH:MM)...' />
-      <input type='text' id='organizedBy' placeholder='Organized By...' />
-      <input type='text' id='specialGuest' placeholder='Special Guest...' />
-      <input type='text' id='inviter' placeholder='Inviter Name...' />
-      <input type='text' id='receiver' placeholder='Receiver Name...' />
-    `; break;
-    case 'Payment': html = `
-      <input type='text' id='bankName' placeholder='Bank Name...' />
-      <input type='text' id='accountNumber' placeholder='Account Number...' />
-      <input type='text' id='iban' placeholder='IBAN...' />
-      <input type='text' id='accountHolder' placeholder='Account Holder Name...' />
-    `; break;
-    case 'Crypto': html = `
-      <input type='text' id='cryptoAddress' placeholder='Crypto Wallet Address...' />
-      <input type='text' id='cryptoAmount' placeholder='Amount...' />
-    `; break;
-    case 'Social': html = `
-      <input type='text' id='facebook' placeholder='Facebook Link (optional)' />
-      <input type='text' id='whatsapp' placeholder='WhatsApp Link (optional)' />
-      <input type='text' id='instagram' placeholder='Instagram Link (optional)' />
-      <input type='text' id='twitter' placeholder='Twitter Link (optional)' />
-      <input type='text' id='linkedin' placeholder='LinkedIn Link (optional)' />
-      <input type='text' id='tiktok' placeholder='TikTok Link (optional)' />
-    `; break;
+  let html='';
+  switch(cat){
+    case 'Text':
+      html=`<textarea id='textInput' rows='4' placeholder='Enter text here, use Enter for new lines'></textarea>`;
+      break;
+    case 'Payment':
+      html=`<input id='bankName' placeholder='Bank Name'>
+            <input id='accountNumber' placeholder='Account Number'>
+            <input id='iban' placeholder='IBAN'>
+            <input id='accountHolder' placeholder='Account Holder Name'>`;
+      break;
+    case 'Crypto':
+      html=`<input id='cryptoAddress' placeholder='Crypto Wallet Address'>
+            <input id='cryptoAmount' placeholder='Amount'>`;
+      break;
+    case 'Social':
+      html=`<input id='facebook' placeholder='Facebook (opt)'>
+            <input id='whatsapp' placeholder='WhatsApp (opt)'>
+            <input id='instagram' placeholder='Instagram (opt)'>
+            <input id='twitter' placeholder='Twitter (opt)'>`;
+      break;
+    case 'Event':
+      html=`<input id='eventName' placeholder='Event Name'>
+            <input type='date' id='eventDate' placeholder='Date'>
+            <input type='time' id='eventTime' placeholder='Time'>
+            <input id='organizedBy' placeholder='Organized By'>
+            <input id='specialGuest' placeholder='Special Guest'>
+            <input id='inviter' placeholder='Inviter Name'>
+            <input id='receiver' placeholder='Receiver Name'>`;
+      break;
+    case 'Email': html=`<input id='emailInput' type='email' placeholder='Email Address'>`; break;
+    case 'Phone': html=`<input id='phoneInput' type='tel' placeholder='Phone Number'>`; break;
+    case 'WiFi': html=`<input id='wifiSSID' placeholder='SSID'>
+                    <input id='wifiPass' placeholder='Password'>
+                    <select id='wifiType'><option value='WPA'>WPA/WPA2</option><option value='WEP'>WEP</option><option value='nopass'>No Password</option></select>`; break;
+    case 'URL': html=`<input id='urlInput' type='url' placeholder='Enter URL'>`; break;
   }
-  detailsInput.innerHTML = html;
-  generateBtn.style.display = 'block';
+  detailsInput.innerHTML=html;
+  generateBtn.style.display='block';
 });
 
-function formatText(category) {
-  switch(category) {
-    case 'Payment': {
-      const bank = document.getElementById('bankName').value;
-      const acc = document.getElementById('accountNumber').value;
-      const iban = document.getElementById('iban').value;
-      const holder = document.getElementById('accountHolder').value;
-      if(!bank || !acc || !iban || !holder) { alert('Please fill all payment details'); return ''; }
-      return `Payment Info:\\nBank: ${bank}\\nAccount: ${acc}\\nIBAN: ${iban}\\nHolder: ${holder}`;
-    }
-    case 'Crypto': {
-      const addr = document.getElementById('cryptoAddress').value;
-      const amt = document.getElementById('cryptoAmount').value;
-      if(!addr || !amt) { alert('Please fill crypto address and amount'); return ''; }
-      return `Crypto Deposit:\\nAddress: ${addr}\\nAmount: ${amt}`;
-    }
-    case 'Event': {
-      const name = document.getElementById('eventName').value;
-      const date = document.getElementById('eventDate').value;
-      const time = document.getElementById('eventTime').value;
-      const org = document.getElementById('organizedBy').value;
-      const guest = document.getElementById('specialGuest').value;
-      const inviter = document.getElementById('inviter').value;
-      const receiver = document.getElementById('receiver').value;
-      if(!name || !date || !time) { alert('Please fill at least Event Name, Date, and Time'); return ''; }
-      return `Event:\\nName: ${name}\\nDate: ${date}\\nTime: ${time}\\nOrganized By: ${org}\\nSpecial Guest: ${guest}\\nInviter: ${inviter}\\nReceiver: ${receiver}`;
-    }
-    case 'Social': {
-      const fb = document.getElementById('facebook').value;
-      const wa = document.getElementById('whatsapp').value;
-      const ig = document.getElementById('instagram').value;
-      const tw = document.getElementById('twitter').value;
-      const li = document.getElementById('linkedin').value;
-      const tt = document.getElementById('tiktok').value;
-      if(!fb && !wa && !ig && !tw && !li && !tt) { alert('Please enter at least one social media link'); return ''; }
-      return `Social Media:\\nFacebook: ${fb}\\nWhatsApp: ${wa}\\nInstagram: ${ig}\\nTwitter: ${tw}\\nLinkedIn: ${li}\\nTikTok: ${tt}`;
-    }
-    default: {
-      const input = document.getElementById('textInput');
-      const textValue = input.value.trim();
-      if(!textValue) { alert('Please enter details'); return ''; }
-      if(category === 'Email') return 'mailto:' + textValue;
-      if(category === 'Phone') return 'tel:' + textValue;
-      if(category === 'WiFi') { const parts = textValue.split(';'); return `WIFI:T:${parts[0]};S:${parts[1]};P:${parts[2]};;`; }
-      if(category === 'SMS') { const parts = textValue.split(';'); return `SMSTO:${parts[0]}:${parts[1]}`; }
-      if(category === 'Location') { const parts = textValue.split(','); return `geo:${parts[0]},${parts[1]}`; }
-      if(category === 'Contact') return `BEGIN:VCARD\\nFN:${textValue}\\nEND:VCARD`;
-      return textValue;
-    }
+function getQRText(cat){
+  switch(cat){
+    case 'Payment':
+      return `Bank: ${document.getElementById('bankName').value}
+Account: ${document.getElementById('accountNumber').value}
+IBAN: ${document.getElementById('iban').value}
+Holder: ${document.getElementById('accountHolder').value}`;
+    case 'Crypto':
+      return `Crypto Address: ${document.getElementById('cryptoAddress').value}
+Amount: ${document.getElementById('cryptoAmount').value}`;
+    case 'Social':
+      return `Facebook: ${document.getElementById('facebook').value}
+WhatsApp: ${document.getElementById('whatsapp').value}
+Instagram: ${document.getElementById('instagram').value}
+Twitter: ${document.getElementById('twitter').value}`;
+    case 'Event':
+      return `Event Name: ${document.getElementById('eventName').value}
+Date: ${document.getElementById('eventDate').value}
+Time: ${document.getElementById('eventTime').value}
+Organizer: ${document.getElementById('organizedBy').value}
+Special Guest: ${document.getElementById('specialGuest').value}
+Inviter: ${document.getElementById('inviter').value}
+Receiver: ${document.getElementById('receiver').value}`;
+    case 'Email': return `Email: ${document.getElementById('emailInput').value}`;
+    case 'Phone': return `Phone: ${document.getElementById('phoneInput').value}`;
+    case 'WiFi':
+      return `WIFI:T:${document.getElementById('wifiType').value};S:${document.getElementById('wifiSSID').value};P:${document.getElementById('wifiPass').value};;`;
+    case 'URL': return `URL: ${document.getElementById('urlInput').value}`;
+    default:
+      return document.getElementById('textInput').value;
   }
 }
 
-generateBtn.addEventListener('click', () => {
-  const cat = categorySelect.value;
-  const qrText = formatText(cat);
-  if(!qrText) return;
-  QRCode.toCanvas(canvas, qrText, { width: 300, margin: 2, color: { dark: '#0ea5e9', light: '#ffffff' } }, function (error) {
-    if (error) console.error(error);
-  });
+function showPopupAndGenerate(qrText){
+  popup.style.display='flex';
+  progressBarInner.style.width='0%';
+  progressText.textContent='0%';
+  let progress=0;
+  const interval=setInterval(()=>{
+    progress++;
+    progressBarInner.style.width=progress+'%';
+    progressText.textContent=progress+'%';
+    if(progress>=100){
+      clearInterval(interval);
+      popup.style.display='none';
+      QRCode.toCanvas(canvas, qrText, {width:300,margin:2,color:{dark:'#0ea5e9',light:'#ffffff'}}, function(error){if(error) console.error(error);});
+    }
+  },40);
+}
+
+generateBtn.addEventListener('click',()=>{
+  const cat=categorySelect.value;
+  const text=getQRText(cat);
+  if(!text.trim()){ alert('Please fill all required fields'); return; }
+  showPopupAndGenerate(text);
 });
 
-downloadBtn.addEventListener('click', () => {
-  if (!canvas.toDataURL()) return alert('Please generate a QR code first');
-  const link = document.createElement('a');
-  link.download = 'qr_code.png';
-  link.href = canvas.toDataURL();
+downloadBtn.addEventListener('click',()=>{
+  if(!canvas.toDataURL()) return alert('Please generate a QR code first');
+  const link=document.createElement('a');
+  link.download='qr_code.png';
+  link.href=canvas.toDataURL();
   link.click();
 });
 </script>
