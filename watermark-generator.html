@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Advanced Watermark Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      background: #fff;
+      margin: auto;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 { text-align: center; color: #333; }
+    label { font-weight: 600; margin-top: 12px; display: block; }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    input[type="color"] { padding: 2px; height: 40px; }
+    #previewCanvas {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid #ccc;
+      margin-bottom: 15px;
+    }
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .button-group button {
+      flex: 1 1 48%;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    @media (max-width: 480px) {
+      .button-group button { flex: 1 1 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Watermark Generator</h2>
+
+    <label>Upload Image</label>
+    <input type="file" id="mainImageInput" accept="image/*">
+
+    <label>Select Watermark Type</label>
+    <select id="watermarkType">
+      <option value="">--Select--</option>
+      <option value="text">Text</option>
+      <option value="image">Upload Image</option>
+      <option value="url">Image from Link</option>
+    </select>
+
+    <!-- Text Watermark -->
+    <div id="textInputContainer" style="display:none;">
+      <label>Watermark Text</label>
+      <input type="text" id="watermarkText">
+
+      <label>Font Family</label>
+      <select id="fontFamily">
+        <option value="Arial">Arial</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Georgia">Georgia</option>
+      </select>
+
+      <label>Font Size (px)</label>
+      <input type="number" id="fontSize" value="36" min="10" max="100">
+
+      <label>Text Color</label>
+      <input type="color" id="textColor" value="#000000">
+    </div>
+
+    <!-- Upload Image -->
+    <div id="imageInputContainer" style="display:none;">
+      <label>Upload Watermark Image</label>
+      <input type="file" id="watermarkImageInput" accept="image/*">
+    </div>
+
+    <!-- Image from URL -->
+    <div id="urlInputContainer" style="display:none;">
+      <label>Paste Watermark Image URL</label>
+      <input type="text" id="watermarkURL" placeholder="https://example.com/image.png">
+    </div>
+
+    <label>Watermark Position</label>
+    <select id="position">
+      <option value="top-left">Top Left</option>
+      <option value="top-center">Top Center</option>
+      <option value="top-right">Top Right</option>
+      <option value="center-left">Center Left</option>
+      <option value="center">Center</option>
+      <option value="center-right">Center Right</option>
+      <option value="bottom-left">Bottom Left</option>
+      <option value="bottom-center">Bottom Center</option>
+      <option value="bottom-right">Bottom Right</option>
+    </select>
+
+    <label>Transparency</label>
+    <input type="range" id="transparency" min="0" max="100" value="20">
+
+    <canvas id="previewCanvas"></canvas>
+
+    <div class="button-group">
+      <button id="downloadBtn">Download</button>
+      <button onclick="printCanvas()">Print</button>
+      <button onclick="shareImage()">Share</button>
+    </div>
+  </div>
+
+  <script>
+  const canvas = document.getElementById("previewCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const mainImageInput = document.getElementById("mainImageInput");
+  const watermarkType = document.getElementById("watermarkType");
+  const textInputContainer = document.getElementById("textInputContainer");
+  const imageInputContainer = document.getElementById("imageInputContainer");
+  const urlInputContainer = document.getElementById("urlInputContainer");
+
+  const watermarkText = document.getElementById("watermarkText");
+  const fontFamily = document.getElementById("fontFamily");
+  const fontSize = document.getElementById("fontSize");
+  const textColor = document.getElementById("textColor");
+  const watermarkImageInput = document.getElementById("watermarkImageInput");
+  const watermarkURL = document.getElementById("watermarkURL");
+  const position = document.getElementById("position");
+  const transparency = document.getElementById("transparency");
+  const downloadBtn = document.getElementById("downloadBtn");
+
+  let mainImage = new Image();
+  let watermarkImage = new Image();
+
+  function drawWatermark() {
+    if (!mainImage.src) return;
+    canvas.width = mainImage.width;
+    canvas.height = mainImage.height;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(mainImage, 0, 0);
+
+    ctx.globalAlpha = parseInt(transparency.value) / 100;
+    const type = watermarkType.value;
+
+    if (type === "text") {
+      const text = watermarkText.value;
+      const font = `${fontSize.value}px ${fontFamily.value}`;
+      ctx.font = font;
+      ctx.fillStyle = textColor.value;
+      const textWidth = ctx.measureText(text).width;
+      const x = getX(position.value, canvas.width, textWidth);
+      const y = getY(position.value, canvas.height, parseInt(fontSize.value));
+      ctx.fillText(text, x, y);
+    }
+
+    if ((type === "image" && watermarkImage.src) || (type === "url" && watermarkImage.src)) {
+      const wmWidth = canvas.width * 0.25;
+      const wmHeight = watermarkImage.height * (wmWidth / watermarkImage.width);
+      const x = getX(position.value, canvas.width, wmWidth);
+      const y = getY(position.value, canvas.height, wmHeight);
+      ctx.drawImage(watermarkImage, x, y, wmWidth, wmHeight);
+    }
+
+    ctx.globalAlpha = 1;
+  }
+
+  function getX(pos, width, contentWidth) {
+    if (pos.includes("left")) return 10;
+    if (pos.includes("center")) return (width - contentWidth) / 2;
+    if (pos.includes("right")) return width - contentWidth - 10;
+  }
+
+  function getY(pos, height, contentHeight) {
+    if (pos.startsWith("top")) return contentHeight + 10;
+    if (pos.startsWith("center")) return (height + contentHeight) / 2;
+    if (pos.startsWith("bottom")) return height - 10;
+  }
+
+  function updateInputs() {
+    const type = watermarkType.value;
+    textInputContainer.style.display = type === "text" ? "block" : "none";
+    imageInputContainer.style.display = type === "image" ? "block" : "none";
+    urlInputContainer.style.display = type === "url" ? "block" : "none";
+    drawWatermark();
+  }
+
+  function loadImageFromURL() {
+    if (watermarkType.value === "url") {
+      watermarkImage = new Image();
+      watermarkImage.crossOrigin = "anonymous";
+      watermarkImage.src = watermarkURL.value;
+      watermarkImage.onload = drawWatermark;
+    }
+  }
+
+  watermarkType.addEventListener("change", updateInputs);
+  watermarkText.addEventListener("input", drawWatermark);
+  fontFamily.addEventListener("change", drawWatermark);
+  fontSize.addEventListener("input", drawWatermark);
+  textColor.addEventListener("input", drawWatermark);
+  position.addEventListener("change", drawWatermark);
+  transparency.addEventListener("input", drawWatermark);
+  watermarkURL.addEventListener("input", loadImageFromURL);
+
+  mainImageInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      mainImage.src = URL.createObjectURL(file);
+      mainImage.onload = drawWatermark;
+    }
+  });
+
+  watermarkImageInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      watermarkImage.src = URL.createObjectURL(file);
+      watermarkImage.onload = drawWatermark;
+    }
+  });
+
+  downloadBtn.addEventListener("click", () => {
+    let count = 5;
+    downloadBtn.innerText = `Downloading in ${count}s...`;
+    const interval = setInterval(() => {
+      count--;
+      downloadBtn.innerText = `Downloading in ${count}s...`;
+      if (count === 0) {
+        clearInterval(interval);
+        const link = document.createElement("a");
+        const randomNum = Math.floor(Math.random() * 10000);
+        link.download = `WMI_${randomNum}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+        downloadBtn.innerText = "Download (after 5s)";
+      }
+    }, 1000);
+  });
+
+  // ✅ FIXED Print Button
+  window.printCanvas = function () {
+    const image = new Image();
+    image.src = canvas.toDataURL("image/png");
+
+    const w = window.open("", "_blank");
+    w.document.write("<html><head><title>Print</title></head><body style='margin:0'>");
+    w.document.write(`<img src="${image.src}" style="width:100%">`);
+    w.document.write("</body></html>");
+    w.document.close();
+
+    image.onload = () => {
+      setTimeout(() => {
+        w.focus();
+        w.print();
+        w.close();
+      }, 500);
+    };
+  };
+
+  // ✅ FIXED Share Button
+  window.shareImage = async function () {
+    try {
+      const blob = await (await fetch(canvas.toDataURL("image/png"))).blob();
+      const file = new File([blob], "watermarked.png", { type: "image/png" });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Watermarked Image",
+          text: "Check out my watermarked image!",
+        });
+      } else {
+        alert("Web Share not supported on this browser. Please download manually.");
+      }
+    } catch (err) {
+      alert("Sharing failed: " + err.message);
+    }
+  };
+</script>
+
+</body>
+</html>
