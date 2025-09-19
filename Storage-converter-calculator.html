@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storage Calculator</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      text-align: center;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      background: #f9f9f9;
+      width: 100%;
+      max-width: 400px;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      color: #333;
+      animation: slideDown 0.8s ease;
+    }
+
+    select, input, button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 80%;
+      transition: all 0.3s ease;
+    }
+
+    input:focus, select:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 8px rgba(0,123,255,0.4);
+      transform: scale(1.02);
+    }
+
+    button {
+      background: #007bff;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      background: #0056b3;
+      transform: scale(1.05);
+    }
+
+    .result {
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .explanation {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #666;
+      line-height: 1.4em;
+    }
+
+    /* Popup Overlay */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+    }
+
+    .popup {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      width: 300px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      animation: zoomIn 0.3s ease;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 15px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #28a745;
+      transition: width 0.2s linear;
+    }
+
+    .progress-text {
+      margin-top: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes zoomIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Storage Calculator</h2>
+    <input type="number" id="inputValue" placeholder="Enter value" />
+
+    <select id="fromUnit">
+      <option value="bit">Bit</option>
+      <option value="byte">Byte</option>
+      <option value="kb">KB</option>
+      <option value="mb">MB</option>
+      <option value="gb">GB</option>
+      <option value="tb">TB</option>
+      <option value="pb">PB</option>
+    </select>
+
+    <select id="toUnit">
+      <option value="bit">Bit</option>
+      <option value="byte">Byte</option>
+      <option value="kb">KB</option>
+      <option value="mb">MB</option>
+      <option value="gb">GB</option>
+      <option value="tb">TB</option>
+      <option value="pb">PB</option>
+    </select>
+
+    <button onclick="convert()">Convert</button>
+    <div class="result" id="result"></div>
+    <div class="explanation" id="explanation"></div>
+  </div>
+
+  <!-- Processing Popup -->
+  <div class="overlay" id="overlay">
+    <div class="popup">
+      <h3>Processing...</h3>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-text" id="progressText">0%</div>
+    </div>
+  </div>
+
+  <script>
+    const unitValues = {
+      bit: 1,
+      byte: 8,
+      kb: 8 * 1024,
+      mb: 8 * 1024 * 1024,
+      gb: 8 * 1024 * 1024 * 1024,
+      tb: 8 * 1024 * 1024 * 1024 * 1024,
+      pb: 8 * 1024 * 1024 * 1024 * 1024 * 1024
+    };
+
+    function convert() {
+      let input = parseFloat(document.getElementById("inputValue").value);
+      let from = document.getElementById("fromUnit").value;
+      let to = document.getElementById("toUnit").value;
+
+      if (from === to) {
+        document.getElementById("result").innerText = "⚠️ Please select different units.";
+        document.getElementById("explanation").innerText = "";
+        return;
+      }
+
+      let bits = input * unitValues[from];
+      let result = bits / unitValues[to];
+
+      showProcessing(() => {
+        document.getElementById("result").innerText = 
+          `${input} ${from.toUpperCase()} = ${result.toLocaleString()} ${to.toUpperCase()}`;
+        document.getElementById("explanation").innerText = explainConversion(from, to);
+      });
+    }
+
+    function explainConversion(from, to) {
+      const rules = {
+        bit: "1 Byte = 8 Bits",
+        byte: "1 KB = 1024 Bytes",
+        kb: "1 MB = 1024 KB",
+        mb: "1 GB = 1024 MB",
+        gb: "1 TB = 1024 GB",
+        tb: "1 PB = 1024 TB"
+      };
+      return rules[from] || `Conversion uses binary standard (1 ${to.toUpperCase()} = 1024 ${from.toUpperCase()} in hierarchy).`;
+    }
+
+    function showProcessing(callback) {
+      let overlay = document.getElementById("overlay");
+      let fill = document.getElementById("progressFill");
+      let text = document.getElementById("progressText");
+      let progress = 0;
+
+      overlay.style.display = "flex";
+      fill.style.width = "0%";
+      text.innerText = "0%";
+
+      let interval = setInterval(() => {
+        progress += 5;
+        fill.style.width = progress + "%";
+        text.innerText = progress + "%";
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            overlay.style.display = "none";
+            callback();
+          }, 200);
+        }
+      }, 100); // 2 sec total
+    }
+  </script>
+
+</body>
+</html>
