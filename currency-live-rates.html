@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Currency Rates Widget</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Poppins", Arial, sans-serif;
+      background: linear-gradient(135deg, #eef2f3, #dfe9f3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .widget-container {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      max-width: 1000px;
+      width: 100%;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+
+    .widget-container:hover {
+      transform: translateY(-6px);
+      box-shadow: 0px 12px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .widget-header {
+      background: linear-gradient(90deg, #007bff, #28a745);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      position: relative;
+    }
+
+    iframe {
+      border: none;
+      width: 100%;
+      height: 400px;
+      display: block;
+    }
+
+    .refresh-btn {
+      position: absolute;
+      right: 15px;
+      top: 12px;
+      background: white;
+      border: none;
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+    }
+
+    .refresh-btn:hover {
+      transform: rotate(180deg);
+      background: #f0f0f0;
+    }
+
+    .refresh-btn span {
+      font-size: 18px;
+      color: #007bff;
+    }
+
+    /* Popup Overlay */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(5px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    .popup {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0px 6px 20px rgba(0,0,0,0.3);
+      width: 300px;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .popup h3 {
+      margin: 0 0 15px;
+      font-size: 20px;
+      color: #333;
+    }
+
+    .progress {
+      font-size: 18px;
+      font-weight: bold;
+      color: #007bff;
+      margin-bottom: 10px;
+    }
+
+    /* Progress Bar */
+    .progress-bar {
+      width: 100%;
+      height: 12px;
+      background: #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #007bff, #28a745);
+      border-radius: 8px;
+      transition: width 0.1s linear;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .widget-header { font-size: 18px; padding: 12px; }
+      iframe { height: 350px; }
+    }
+    @media (max-width: 480px) {
+      .widget-header { font-size: 16px; }
+      iframe { height: 300px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="widget-container">
+    <div class="widget-header">
+      🌍 Live Market Currency Rates
+      <button class="refresh-btn" onclick="refreshWidget()"><span>🔄</span></button>
+    </div>
+    
+    <!-- Updated iframe -->
+    <iframe id="currencyWidget" 
+      src="https://fxpricing.com/fx-widget/market-currency-rates-widget.php?id=57,996,25,39,40,1,2,4,6,13,17,15,32,33,51&pair_weight=normal&fcs_link=hide&target_link=https%3A%2F%2Faaqi1756.github.io%2Faaqi-softs-tools%2F&click_target=blank&theme=light&tm-cr=FFFFFF&hr-cr=00000013&by-cr=28A745&sl-cr=DC3545&flags=circle&value_alignment=center&column=price,chg,chg_per,time&lang=en&font=Arial, sans-serif">
+    </iframe>
+
+    <div id="fx-pricing-widget-copyright">
+      <span>Powered by </span>
+      <a href="https://fxpricing.com/" target="_blank">FX Pricing</a>
+    </div>
+  </div>
+
+  <!-- Overlay Popup -->
+  <div class="overlay" id="overlay">
+    <div class="popup">
+      <h3>Processing...</h3>
+      <div class="progress" id="progressText">0%</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function refreshWidget() {
+      let overlay = document.getElementById("overlay");
+      let progressText = document.getElementById("progressText");
+      let progressFill = document.getElementById("progressFill");
+      let iframe = document.getElementById("currencyWidget");
+
+      overlay.style.display = "flex";
+      let progress = 0;
+      let interval = setInterval(() => {
+        progress += 2; // 2% every 100ms → 5 sec total
+        progressText.textContent = progress + "%";
+        progressFill.style.width = progress + "%";
+        if (progress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            overlay.style.display = "none";
+            iframe.src = iframe.src; // Reload widget
+            progressFill.style.width = "0%"; // Reset for next use
+          }, 500);
+        }
+      }, 100);
+    }
+  </script>
+
+</body>
+</html>
