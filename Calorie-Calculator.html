@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calorie Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: white;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .calculator {
+      background: #f9f9f9;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 350px;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    input, select, button {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    input:focus, select:focus {
+      border-color: #4CAF50;
+      transform: scale(1.02);
+    }
+
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    /* Popups */
+    .popup, .progress-popup {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .progress-popup {
+      background: rgba(255,255,255,0.7);
+    }
+
+    .popup.active, .progress-popup.active {
+      display: flex;
+    }
+
+    .popup-content, .progress-content {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+      width: 300px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .blur {
+      filter: blur(5px);
+      pointer-events: none;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: #4CAF50;
+      transition: width 0.1s linear;
+    }
+
+    .close-btn {
+      margin-top: 15px;
+      padding: 10px 15px;
+      border: none;
+      background: red;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator" id="mainContent">
+    <h2>🔥 Calorie Calculator</h2>
+    <input type="text" id="name" placeholder="Enter your name">
+    <input type="number" id="age" placeholder="Enter your age">
+    <input type="number" id="height" placeholder="Enter your height (cm)">
+    <input type="number" id="weight" placeholder="Enter your weight (kg)">
+    <input type="number" id="target" placeholder="Enter target weight (kg)">
+    <select id="activity">
+      <option value="1.2">Sedentary (little/no exercise)</option>
+      <option value="1.375">Lightly active</option>
+      <option value="1.55">Moderately active</option>
+      <option value="1.725">Very active</option>
+      <option value="1.9">Super active</option>
+    </select>
+    <button onclick="startProcessing()">Calculate</button>
+  </div>
+
+  <!-- Progress Popup -->
+  <div class="progress-popup" id="progressPopup">
+    <div class="progress-content">
+      <h3>Processing...</h3>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <p id="progressText">0%</p>
+    </div>
+  </div>
+
+  <!-- Result Popup -->
+  <div class="popup" id="resultPopup">
+    <div class="popup-content">
+      <h3 id="greeting"></h3>
+      <p id="resultText"></p>
+      <p id="goalText"></p>
+      <p id="macroText"></p>
+      <button class="close-btn" onclick="closePopup()">Close</button>
+    </div>
+  </div>
+
+  <script>
+    function startProcessing() {
+      document.getElementById("progressPopup").classList.add("active");
+      document.getElementById("mainContent").classList.remove("blur");
+
+      let fill = document.getElementById("progressFill");
+      let text = document.getElementById("progressText");
+      let progress = 0;
+
+      let interval = setInterval(() => {
+        progress += 5;
+        fill.style.width = progress + "%";
+        text.innerText = progress + "%";
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            document.getElementById("progressPopup").classList.remove("active");
+            document.getElementById("mainContent").classList.add("blur");
+            showResult();
+          }, 200);
+        }
+      }, 30);
+    }
+
+    function showResult() {
+      const name = document.getElementById("name").value || "Friend";
+      const age = document.getElementById("age").value;
+      const height = parseFloat(document.getElementById("height").value);
+      const weight = parseFloat(document.getElementById("weight").value);
+      const target = parseFloat(document.getElementById("target").value);
+      const activity = parseFloat(document.getElementById("activity").value);
+
+      // BMR (Mifflin-St Jeor, no gender so neutral version)
+      const bmr = 10 * weight + 6.25 * height - 5 * age;
+      const calories = Math.round(bmr * activity);
+
+      // Goal timeline (assume 0.5 kg per week)
+      const diff = weight - target;
+      const weeks = Math.abs(diff / 0.5).toFixed(0);
+
+      // Macronutrient split (40% carbs, 30% protein, 30% fat)
+      const protein = Math.round((calories * 0.3) / 4);
+      const carbs = Math.round((calories * 0.4) / 4);
+      const fat = Math.round((calories * 0.3) / 9);
+
+      document.getElementById("greeting").innerText = `Hi ${name}! 🎉`;
+      document.getElementById("resultText").innerText = `Your daily calorie needs: ${calories} kcal.`;
+      document.getElementById("goalText").innerText = `Estimated weeks to reach goal: ${weeks} weeks.`;
+      document.getElementById("macroText").innerText = `Macronutrients → Protein: ${protein}g, Carbs: ${carbs}g, Fat: ${fat}g.`;
+
+      document.getElementById("resultPopup").classList.add("active");
+    }
+
+    function closePopup() {
+      document.getElementById("resultPopup").classList.remove("active");
+      document.getElementById("mainContent").classList.remove("blur");
+    }
+  </script>
+</body>
+</html>
