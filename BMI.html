@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BMI Calculator</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      text-align: center;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      background: #f9f9f9;
+      width: 100%;
+      max-width: 400px;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      color: #333;
+      animation: slideDown 0.8s ease;
+    }
+
+    input, button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 80%;
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 8px rgba(0,123,255,0.4);
+      transform: scale(1.02);
+    }
+
+    button {
+      background: #007bff;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      background: #0056b3;
+      transform: scale(1.05);
+    }
+
+    /* Overlay Popup (Processing & Result) */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+    }
+
+    .popup {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      width: 320px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      animation: zoomIn 0.3s ease;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 15px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #28a745;
+      transition: width 0.1s linear;
+    }
+
+    .progress-text {
+      margin-top: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    /* Result Popup */
+    .result-popup h3 {
+      margin-bottom: 10px;
+      color: #007bff;
+    }
+
+    .close-btn {
+      margin-top: 15px;
+      padding: 8px 15px;
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .close-btn:hover {
+      background: #a71d2a;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes zoomIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>BMI Calculator</h2>
+    <input type="text" id="name" placeholder="Enter your name" />
+    <input type="number" id="age" placeholder="Enter your age" />
+    <input type="number" id="weight" placeholder="Enter weight in kg" />
+    <input type="number" id="height" placeholder="Enter height in cm" />
+    <button onclick="calculateBMI()">Calculate BMI</button>
+  </div>
+
+  <!-- Processing Popup -->
+  <div class="overlay" id="processingOverlay">
+    <div class="popup">
+      <h3>Processing...</h3>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-text" id="progressText">0%</div>
+    </div>
+  </div>
+
+  <!-- Result Popup -->
+  <div class="overlay" id="resultOverlay">
+    <div class="popup result-popup">
+      <h3 id="greeting"></h3>
+      <p id="summary"></p>
+      <p id="suggestion"></p>
+      <button class="close-btn" onclick="closeResult()">Close</button>
+    </div>
+  </div>
+
+  <script>
+    function calculateBMI() {
+      let name = document.getElementById("name").value.trim();
+      let age = document.getElementById("age").value.trim();
+      let weight = parseFloat(document.getElementById("weight").value);
+      let heightCm = parseFloat(document.getElementById("height").value);
+      let height = heightCm / 100; // cm → m
+
+      if (!name || !age || !weight || !height) {
+        alert("⚠️ Please enter all details correctly.");
+        return;
+      }
+
+      showProcessing(() => {
+        let bmi = weight / (height * height);
+        let category = "";
+
+        if (bmi < 18.5) {
+          category = "Underweight 🟦";
+        } else if (bmi < 24.9) {
+          category = "Normal 🟩";
+        } else if (bmi < 29.9) {
+          category = "Overweight 🟨";
+        } else {
+          category = "Obese 🟥";
+        }
+
+        // Healthy weight range
+        let minWeight = (18.5 * height * height).toFixed(1);
+        let maxWeight = (24.9 * height * height).toFixed(1);
+
+        document.getElementById("greeting").innerText = `Hello, ${name}! 🎉`;
+        document.getElementById("summary").innerText = 
+          `Age: ${age} years\nYour BMI is ${bmi.toFixed(2)}\nCategory: ${category}`;
+        document.getElementById("suggestion").innerText =
+          `👉 For your height (${heightCm} cm), a healthy weight range is ${minWeight} kg – ${maxWeight} kg.`;
+
+        document.getElementById("resultOverlay").style.display = "flex";
+      });
+    }
+
+    function showProcessing(callback) {
+      let overlay = document.getElementById("processingOverlay");
+      let fill = document.getElementById("progressFill");
+      let text = document.getElementById("progressText");
+      let progress = 0;
+
+      overlay.style.display = "flex";
+      fill.style.width = "0%";
+      text.innerText = "0%";
+
+      let interval = setInterval(() => {
+        progress += 20;
+        fill.style.width = progress + "%";
+        text.innerText = progress + "%";
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            overlay.style.display = "none";
+            callback();
+          }, 100);
+        }
+      }, 300); // total = 1.5 sec
+    }
+
+    function closeResult() {
+      document.getElementById("resultOverlay").style.display = "none";
+    }
+  </script>
+
+</body>
+</html>
