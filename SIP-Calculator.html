@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIP Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+        }
+        
+        .progress-bar {
+            transition: width 0.2s ease-in-out;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main SIP Calculator Card -->
+    <div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-lg mx-4 fade-in">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">SIP Calculator</h1>
+            <p class="mt-2 text-gray-500">Plan your financial future with ease.</p>
+        </div>
+        
+        <!-- Input Form -->
+        <div class="space-y-6">
+            <div id="validation-message" class="text-center text-red-500 font-semibold hidden"></div>
+            <div>
+                <label for="monthly-investment" class="block text-sm font-medium text-gray-700 mb-1">Monthly Investment</label>
+                <input type="number" id="monthly-investment" value="5000" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300" placeholder="e.g., 5000">
+            </div>
+            <div>
+                <label for="annual-increase-rate" class="block text-sm font-medium text-gray-700 mb-1">Annual Investment Increase (%)</label>
+                <input type="number" id="annual-increase-rate" value="0" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300" placeholder="e.g., 5">
+            </div>
+            <div>
+                <label for="return-rate" class="block text-sm font-medium text-gray-700 mb-1">Expected Annual Return Rate (%)</label>
+                <input type="number" id="return-rate" value="12" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300" placeholder="e.g., 12">
+            </div>
+            <div>
+                <label for="time-period" class="block text-sm font-medium text-gray-700 mb-1">Time Period (Years)</label>
+                <input type="number" id="time-period" value="10" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300" placeholder="e.g., 10">
+            </div>
+            <div>
+                <label for="tax-status-select" class="block text-sm font-medium text-gray-700 mb-1">Are you tax registered?</label>
+                <select id="tax-status-select" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300">
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                </select>
+            </div>
+            <div id="tax-rate-container" class="hidden">
+                <label for="tax-rate" class="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+                <input type="number" id="tax-rate" value="15" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300" placeholder="e.g., 15">
+            </div>
+            <button id="calculate-btn" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300">
+                Calculate
+            </button>
+        </div>
+    </div>
+
+    <!-- Processing Modal -->
+    <div id="processing-modal" class="modal">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center fade-in">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Processing...</h2>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                <div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full transition-all duration-300 ease-in-out" style="width: 0%;"></div>
+            </div>
+            <p id="progress-text" class="text-gray-600 text-sm">0%</p>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="results-modal" class="modal">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md mx-4 fade-in relative">
+            <button id="close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-extrabold text-gray-800">Your Investment Summary</h2>
+            </div>
+            <div class="space-y-4 text-left">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 font-medium">Total Invested:</span>
+                    <span id="invested-amount" class="text-gray-800 font-bold">0</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 font-medium">Overall Revenue/Profit:</span>
+                    <span id="estimated-returns" class="text-gray-800 font-bold">0</span>
+                </div>
+                <div id="tax-row" class="flex justify-between items-center hidden">
+                    <span class="text-gray-600 font-medium">Tax Applied:</span>
+                    <span id="tax-amount" class="text-red-600 font-bold">-0</span>
+                </div>
+                <div id="total-value-row" class="flex justify-between items-center hidden">
+                    <span class="text-gray-600 font-medium">Net Total Value:</span>
+                    <span id="total-value" class="text-green-600 font-bold text-lg">0</span>
+                </div>
+                <div id="gross-total-value-row" class="flex justify-between items-center">
+                    <span class="text-gray-600 font-medium">Gross Total Value:</span>
+                    <span id="gross-total-value" class="text-green-600 font-bold text-lg">0</span>
+                </div>
+            </div>
+            
+            <div class="mt-8 text-center text-gray-400 text-sm">
+                AI can make mistakes. Please verify the results or consult a financial advisor.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const monthlyInvestmentInput = document.getElementById('monthly-investment');
+            const annualIncreaseInput = document.getElementById('annual-increase-rate');
+            const returnRateInput = document.getElementById('return-rate');
+            const timePeriodInput = document.getElementById('time-period');
+            const taxStatusSelect = document.getElementById('tax-status-select');
+            const taxRateContainer = document.getElementById('tax-rate-container');
+            const taxRateInput = document.getElementById('tax-rate');
+            const calculateBtn = document.getElementById('calculate-btn');
+            const validationMessage = document.getElementById('validation-message');
+
+            const processingModal = document.getElementById('processing-modal');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+
+            const resultsModal = document.getElementById('results-modal');
+            const investedAmountSpan = document.getElementById('invested-amount');
+            const estimatedReturnsSpan = document.getElementById('estimated-returns');
+            const taxRow = document.getElementById('tax-row');
+            const taxAmountSpan = document.getElementById('tax-amount');
+            const totalValueRow = document.getElementById('total-value-row');
+            const totalValueSpan = document.getElementById('total-value');
+            const grossTotalValueSpan = document.getElementById('gross-total-value');
+            const closeBtn = document.getElementById('close-btn');
+
+            taxStatusSelect.addEventListener('change', () => {
+                taxRateContainer.style.display = taxStatusSelect.value === 'Yes' ? 'block' : 'none';
+            });
+
+            const formatNumber = (number) => {
+                let formattedNumber = parseFloat(number).toFixed(1);
+                let textRepresentation = '';
+
+                if (number >= 1000000000) {
+                    textRepresentation = ` (${(number / 1000000000).toFixed(1)} Billion)`;
+                } else if (number >= 1000000) {
+                    textRepresentation = ` (${(number / 1000000).toFixed(1)} Million)`;
+                } else if (number >= 100000) {
+                    textRepresentation = ` (${(number / 100000).toFixed(1)} Lakh)`;
+                }
+                
+                // Add comma formatting to the main number
+                formattedNumber = formattedNumber.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                
+                return formattedNumber + textRepresentation;
+            };
+
+            calculateBtn.addEventListener('click', () => {
+                const P = parseFloat(monthlyInvestmentInput.value);
+                const annualIncreaseRate = parseFloat(annualIncreaseInput.value) / 100;
+                const r = parseFloat(returnRateInput.value) / 100; // Annual rate
+                const n = parseFloat(timePeriodInput.value);
+                const taxRegistered = taxStatusSelect.value === 'Yes';
+                const taxRate = parseFloat(taxRateInput.value) / 100;
+
+                // Validation
+                if (isNaN(P) || isNaN(annualIncreaseRate) || isNaN(r) || isNaN(n) || P <= 0 || n <= 0 || (taxRegistered && (isNaN(taxRate) || taxRate < 0))) {
+                    validationMessage.textContent = 'Please enter valid numbers for all fields.';
+                    validationMessage.style.display = 'block';
+                    return;
+                }
+                validationMessage.style.display = 'none';
+
+                processingModal.style.display = 'flex';
+                progressBar.style.width = '0%';
+                progressText.textContent = '0%';
+
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 2.5; 
+                    if (progress > 100) progress = 100;
+                    
+                    progressBar.style.width = `${progress}%`;
+                    progressText.textContent = `${Math.floor(progress)}%`;
+
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            processingModal.style.display = 'none';
+                            showResults(P, annualIncreaseRate, r, n, taxRegistered, taxRate);
+                        }, 500);
+                    }
+                }, 100);
+            });
+
+            function showResults(P, annualIncreaseRate, r, n, taxRegistered, taxRate) {
+                let currentMonthlyInvestment = P;
+                let totalInvestedAmount = 0;
+                let totalFutureValue = 0;
+                const monthlyRate = r > -1 ? Math.pow(1 + r, 1 / 12) - 1 : 0;
+                const totalMonths = n * 12;
+
+                for (let month = 1; month <= totalMonths; month++) {
+                    totalFutureValue = totalFutureValue * (1 + monthlyRate) + currentMonthlyInvestment;
+                    totalInvestedAmount += currentMonthlyInvestment;
+                    if (month % 12 === 0) {
+                        currentMonthlyInvestment *= (1 + annualIncreaseRate);
+                    }
+                }
+
+                const grossReturns = totalFutureValue - totalInvestedAmount;
+                let netReturns = grossReturns;
+                let taxAmount = 0;
+
+                if (taxRegistered) {
+                    taxAmount = grossReturns * taxRate;
+                    netReturns = grossReturns - taxAmount;
+                    taxRow.style.display = 'flex';
+                    totalValueRow.style.display = 'flex';
+                } else {
+                    taxRow.style.display = 'none';
+                    totalValueRow.style.display = 'none';
+                }
+
+                investedAmountSpan.textContent = formatNumber(totalInvestedAmount);
+                estimatedReturnsSpan.textContent = formatNumber(grossReturns);
+                taxAmountSpan.textContent = `-${formatNumber(taxAmount)}`;
+                totalValueSpan.textContent = formatNumber(totalInvestedAmount + netReturns);
+                grossTotalValueSpan.textContent = formatNumber(totalFutureValue);
+
+                resultsModal.style.display = 'flex';
+            }
+
+            closeBtn.addEventListener('click', () => {
+                resultsModal.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
