@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="10">
+    <title>Live Time & Date</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Moment.js for date and time handling -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <!-- Three.js for 3D graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+            /* Light background */
+            color: #2d3748;
+            /* Dark text */
+        }
+
+        /* 3D container styles */
+        #three-container {
+            width: 100%;
+            height: 250px;
+        }
+
+        /* Keyframe animations for a more dynamic feel */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes floating {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        /* Apply animations */
+        .animated-card {
+            animation: fadeIn 1s ease-in-out forwards;
+        }
+
+        .animated-item {
+            animation: fadeInUp 0.8s ease-in-out both, floating 3s ease-in-out infinite;
+        }
+
+        /* Adjust animation delay for a staggered effect */
+        .animated-item:nth-child(1) {
+            animation-delay: 0.2s;
+        }
+
+        .animated-item:nth-child(2) {
+            animation-delay: 0.4s;
+        }
+
+        .animated-item:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        /* Enhanced hover effect for a 3D lift */
+        .card-hover {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            transform-style: preserve-3d;
+            will-change: transform, box-shadow;
+        }
+
+        .card-hover:hover {
+            transform: scale(1.05) translateZ(10px) rotateZ(1deg);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <!-- 3D container -->
+    <div id="three-container" class="w-full max-w-4xl mb-8 rounded-xl overflow-hidden"></div>
+
+    <div class="animated-card bg-white rounded-xl shadow-2xl p-8 md:p-12 w-full max-w-4xl text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-gray-800">
+            Live Time & Date Tool
+        </h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            <div class="bg-gray-100 p-6 rounded-xl shadow-lg card-hover animated-item">
+                <h2 class="text-xl md:text-2xl font-semibold text-gray-600 mb-2">Exact Date</h2>
+                <p id="exact-date" class="text-3xl md:text-4xl font-extrabold text-lime-600"></p>
+            </div>
+            <div class="bg-gray-100 p-6 rounded-xl shadow-lg card-hover animated-item">
+                <h2 class="text-xl md:text-2xl font-semibold text-gray-600 mb-2">Day</h2>
+                <p id="day" class="text-3xl md:text-4xl font-extrabold text-lime-600"></p>
+            </div>
+            <div class="bg-gray-100 p-6 rounded-xl shadow-lg card-hover animated-item">
+                <h2 class="text-xl md:text-2xl font-semibold text-gray-600 mb-2">Time</h2>
+                <p id="time-zone" class="text-xl md:text-2xl text-gray-500"></p>
+                <p id="time" class="text-5xl md:text-6xl font-extrabold text-gray-900"></p>
+            </div>
+        </div>
+
+        <p class="mt-8 text-sm text-gray-500">
+            * Data refreshes automatically every second.
+        </p>
+
+    </div>
+
+    <script>
+        // --- 3D Scene Setup ---
+        const container = document.getElementById('three-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({
+            antialiasing: true
+        });
+
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setClearColor(0xf7fafc); // Match body background color
+        container.appendChild(renderer.domElement);
+
+        // Create a geometric shape
+        const geometry = new THREE.IcosahedronGeometry(2, 0);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x4fd1c5,
+            flatShading: true,
+            roughness: 0.5,
+            metalness: 0.5,
+        });
+        const shape = new THREE.Mesh(geometry, material);
+        scene.add(shape);
+
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xffffff, 1);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        camera.position.z = 5;
+
+        // Animation loop for 3D scene
+        function animate() {
+            requestAnimationFrame(animate);
+            shape.rotation.x += 0.005;
+            shape.rotation.y += 0.005;
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+        });
+
+
+        // --- Live Date/Time Logic ---
+        function updateDateTime() {
+            const now = moment();
+            const exactDate = now.format('MMMM Do, YYYY');
+            document.getElementById('exact-date').textContent = exactDate;
+            const day = now.format('dddd');
+            document.getElementById('day').textContent = day;
+            const time = now.format('h:mm:ss A');
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            document.getElementById('time').textContent = time;
+            document.getElementById('time-zone').textContent = timeZone;
+        }
+
+        window.onload = function () {
+            // Start the animations on window load
+            animate();
+            updateDateTime();
+        }
+
+        setInterval(updateDateTime, 1000);
+    </script>
+
+</body>
+
+</html>
